@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Profesyonel kura çekimi uygulaması - Takım ve oyuncu eşleştirme">
+    <title>Kura Çekimi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS Reset & Variables ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #111128;
+            --bg-card: rgba(255, 255, 255, 0.04);
+            --bg-card-hover: rgba(255, 255, 255, 0.07);
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-primary: #6c5ce7;
+            --accent-secondary: #a29bfe;
+            --accent-glow: rgba(108, 92, 231, 0.4);
+            --accent-warm: #fd79a8;
+            --accent-warm-glow: rgba(253, 121, 168, 0.3);
+            --accent-gold: #ffeaa7;
+            --accent-gold-glow: rgba(255, 234, 167, 0.3);
+            --accent-teal: #00cec9;
+            --accent-teal-glow: rgba(0, 206, 201, 0.3);
+            --text-primary: #f0f0f8;
+            --text-secondary: rgba(240, 240, 248, 0.6);
+            --text-muted: rgba(240, 240, 248, 0.35);
+            --danger: #ff6b6b;
+            --success: #51cf66;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ===== Background Effects ===== */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb:nth-child(1) {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-primary);
+            top: -200px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .bg-orb:nth-child(2) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent-warm);
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -7s;
+        }
+
+        .bg-orb:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-teal);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+            opacity: 0.15;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -40px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(40px, 30px) scale(1.02); }
+        }
+
+        /* ===== Grid Pattern Overlay ===== */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* ===== Main Container ===== */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 56px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-secondary);
+            margin-bottom: 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-secondary) 50%, var(--accent-warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ===== Input Section ===== */
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @media (max-width: 768px) {
+            .input-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            transition: var(--transition-smooth);
+        }
+
+        .input-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .input-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .input-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .input-card-icon.names {
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(162, 155, 254, 0.1));
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .input-card-icon.teams {
+            background: linear-gradient(135deg, rgba(253, 121, 168, 0.2), rgba(253, 121, 168, 0.1));
+            border: 1px solid rgba(253, 121, 168, 0.3);
+        }
+
+        .input-card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .input-card-count {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            transition: var(--transition-fast);
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-field:focus {
+            border-color: var(--accent-primary);
+            background: rgba(108, 92, 231, 0.08);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+        }
+
+        .btn-add {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+        }
+
+        .btn-add:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-add:active {
+            transform: scale(0.95);
+        }
+
+        .btn-add.teams-btn {
+            background: linear-gradient(135deg, var(--accent-warm), #e84393);
+        }
+
+        .btn-add.teams-btn:hover {
+            box-shadow: 0 4px 20px var(--accent-warm-glow);
+        }
+
+        /* ===== Tags List ===== */
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 44px;
+            padding: 4px 0;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            animation: tagIn 0.3s var(--transition-bounce);
+            cursor: default;
+            transition: var(--transition-fast);
+        }
+
+        .tag.name-tag {
+            background: rgba(108, 92, 231, 0.15);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            color: var(--accent-secondary);
+        }
+
+        .tag.team-tag {
+            background: rgba(253, 121, 168, 0.15);
+            border: 1px solid rgba(253, 121, 168, 0.3);
+            color: var(--accent-warm);
+        }
+
+        .tag:hover {
+            transform: translateY(-2px);
+        }
+
+        .tag .remove-btn {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-fast);
+            line-height: 1;
+        }
+
+        .tag .remove-btn:hover {
+            background: rgba(255, 107, 107, 0.4);
+            color: var(--danger);
+        }
+
+        @keyframes tagIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        /* ===== Draw Button ===== */
+        .draw-section {
+            text-align: center;
+            margin-bottom: 48px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .btn-draw {
+            position: relative;
+            padding: 18px 56px;
+            background: linear-gradient(135deg, var(--accent-primary), #8b5cf6, var(--accent-warm));
+            background-size: 200% 200%;
+            border: none;
+            border-radius: var(--radius-xl);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        .btn-draw::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.6s;
+        }
+
+        .btn-draw:hover::before {
+            left: 100%;
+        }
+
+        .btn-draw:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(108, 92, 231, 0.4), 0 4px 16px rgba(253, 121, 168, 0.2);
+        }
+
+        .btn-draw:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-draw:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-draw:disabled::before {
+            display: none;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .draw-hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ===== Error Message ===== */
+        .error-message {
+            text-align: center;
+            padding: 14px 24px;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.25);
+            border-radius: var(--radius-md);
+            color: var(--danger);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            animation: shake 0.5s ease-in-out;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-4px); }
+        }
+
+        /* ===== Drawing Animation Overlay ===== */
+        .draw-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.92);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .draw-overlay.active {
+            display: flex;
+            animation: overlayIn 0.4s ease-out;
+        }
+
+        @keyframes overlayIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slot-machine {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .slot-item {
+            width: 200px;
+            padding: 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .slot-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .slot-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slot-value.name-slot {
+            color: var(--accent-secondary);
+        }
+
+        .slot-value.team-slot {
+            color: var(--accent-warm);
+        }
+
+        .slot-value.shuffling {
+            animation: slotShuffle 0.1s ease-in-out infinite;
+        }
+
+        @keyframes slotShuffle {
+            0% { transform: translateY(-3px); opacity: 0.7; }
+            50% { transform: translateY(3px); opacity: 1; }
+            100% { transform: translateY(-3px); opacity: 0.7; }
+        }
+
+        .slot-connector {
+            font-size: 32px;
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        .draw-counter {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== Results Section ===== */
+        .results-section {
+            animation: fadeInUp 0.8s ease-out;
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .results-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-gold), #f39c12, var(--accent-warm));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .results-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition-smooth);
+        }
+
+        .result-card.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: translateY(-3px);
+        }
+
+        .result-number {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-warm));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .result-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .result-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .result-team {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent-warm);
+        }
+
+        .result-team .team-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-warm);
+        }
+
+        .result-arrow {
+            font-size: 24px;
+            color: var(--text-muted);
+        }
+
+        /* ===== Reset Button ===== */
+        .btn-reset {
+            display: block;
+            margin: 0 auto;
+            padding: 14px 40px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-xl);
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 107, 107, 0.3);
+            color: var(--danger);
+        }
+
+        /* ===== Animations ===== */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Confetti Canvas ===== */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ===== Particle burst on match ===== */
+        .match-burst {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: burst 0.8s ease-out forwards;
+        }
+
+        @keyframes burst {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-gradient">
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Draw Animation Overlay -->
+    <div class="draw-overlay" id="drawOverlay">
+        <div class="draw-counter" id="drawCounter">Kura çekiliyor...</div>
+        <div class="slot-machine">
+            <div class="slot-item">
+                <div class="slot-label">Oyuncu</div>
+                <div class="slot-value name-slot" id="slotName">—</div>
+            </div>
+            <div class="slot-connector">⟷</div>
+            <div class="slot-item">
+                <div class="slot-label">Takım</div>
+                <div class="slot-value team-slot" id="slotTeam">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-badge">
+                <span class="dot"></span>
+                Kura Sistemi v1.0
+            </div>
+            <h1>Kura Çekimi</h1>
+            <p class="header-subtitle">Takımları ve oyuncu isimlerini girin, ardından kura çekimini başlatın. Tamamen rastgele eşleştirme yapılır.</p>
+        </header>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <!-- Names Card -->
+            <div class="input-card" id="namesCard">
+                <div class="input-card-header">
+                    <div class="input-card-icon names">👤</div>
+                    <div>
+                        <div class="input-card-title">Oyuncular</div>
+                        <div class="input-card-count" id="namesCount">0 oyuncu eklendi</div>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <input type="text" class="input-field" id="nameInput" placeholder="Oyuncu ismi girin..." autocomplete="off">
+                    <button class="btn-add" id="addNameBtn" title="Oyuncu ekle">+</button>
+                </div>
+                <div class="tags-list" id="namesList">
+                    <div class="empty-state">Henüz oyuncu eklenmedi</div>
+                </div>
+            </div>
+
+            <!-- Teams Card -->
+            <div class="input-card" id="teamsCard">
+                <div class="input-card-header">
+                    <div class="input-card-icon teams">⚽</div>
+                    <div>
+                        <div class="input-card-title">Takımlar</div>
+                        <div class="input-card-count" id="teamsCount">0 takım eklendi</div>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <input type="text" class="input-field" id="teamInput" placeholder="Takım ismi girin..." autocomplete="off">
+                    <button class="btn-add teams-btn" id="addTeamBtn" title="Takım ekle">+</button>
+                </div>
+                <div class="tags-list" id="teamsList">
+                    <div class="empty-state">Henüz takım eklenmedi</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Draw Button -->
+        <div class="draw-section">
+            <button class="btn-draw" id="drawBtn">🎲 Kura Çek</button>
+            <div class="draw-hint">Oyuncu ve takım sayısı eşit olmalıdır</div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2 class="results-title">🏆 Kura Sonuçları</h2>
+                <p class="results-subtitle" id="resultsSubtitle">Eşleştirmeler tamamlandı</p>
+            </div>
+            <div class="results-grid" id="resultsGrid"></div>
+            <button class="btn-reset" id="resetBtn">↻ Yeni Kura Çek</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== State =====
+        const state = {
+            names: [],
+            teams: [],
+            results: []
+        };
+
+        // ===== DOM Elements =====
+        const elements = {
+            nameInput: document.getElementById('nameInput'),
+            teamInput: document.getElementById('teamInput'),
+            addNameBtn: document.getElementById('addNameBtn'),
+            addTeamBtn: document.getElementById('addTeamBtn'),
+            namesList: document.getElementById('namesList'),
+            teamsList: document.getElementById('teamsList'),
+            namesCount: document.getElementById('namesCount'),
+            teamsCount: document.getElementById('teamsCount'),
+            drawBtn: document.getElementById('drawBtn'),
+            errorMessage: document.getElementById('errorMessage'),
+            resultsSection: document.getElementById('resultsSection'),
+            resultsGrid: document.getElementById('resultsGrid'),
+            resetBtn: document.getElementById('resetBtn'),
+            drawOverlay: document.getElementById('drawOverlay'),
+            slotName: document.getElementById('slotName'),
+            slotTeam: document.getElementById('slotTeam'),
+            drawCounter: document.getElementById('drawCounter'),
+            confettiCanvas: document.getElementById('confetti-canvas')
+        };
+
+        // ===== Initialize with default data =====
+        function initializeDefaults() {
+            const defaultNames = ['Ayhan', 'Toprak', 'Akif', 'Salih', 'Sadin', 'Ahmet'];
+            const defaultTeams = ['United', 'City', 'Tottenham', 'Chelsea', 'United', 'Tottenham'];
+
+            defaultNames.forEach(name => {
+                state.names.push(name);
+            });
+
+            defaultTeams.forEach(team => {
+                state.teams.push(team);
+            });
+
+            renderNames();
+            renderTeams();
+        }
+
+        // ===== Add Name =====
+        function addName() {
+            const name = elements.nameInput.value.trim();
+            if (!name) return;
+
+            state.names.push(name);
+            elements.nameInput.value = '';
+            renderNames();
+            hideError();
+        }
+
+        // ===== Add Team =====
+        function addTeam() {
+            const team = elements.teamInput.value.trim();
+            if (!team) return;
+
+            state.teams.push(team);
+            elements.teamInput.value = '';
+            renderTeams();
+            hideError();
+        }
+
+        // ===== Remove Name =====
+        function removeName(index) {
+            state.names.splice(index, 1);
+            renderNames();
+        }
+
+        // ===== Remove Team =====
+        function removeTeam(index) {
+            state.teams.splice(index, 1);
+            renderTeams();
+        }
+
+        // ===== Render Names =====
+        function renderNames() {
+            if (state.names.length === 0) {
+                elements.namesList.innerHTML = '<div class="empty-state">Henüz oyuncu eklenmedi</div>';
+            } else {
+                elements.namesList.innerHTML = state.names.map((name, i) =>
+                    `<span class="tag name-tag">
+                        ${escapeHtml(name)}
+                        <button class="remove-btn" onclick="removeName(${i})" title="Kaldır">✕</button>
+                    </span>`
+                ).join('');
+            }
+            elements.namesCount.textContent = `${state.names.length} oyuncu eklendi`;
+        }
+
+        // ===== Render Teams =====
+        function renderTeams() {
+            if (state.teams.length === 0) {
+                elements.teamsList.innerHTML = '<div class="empty-state">Henüz takım eklenmedi</div>';
+            } else {
+                elements.teamsList.innerHTML = state.teams.map((team, i) =>
+                    `<span class="tag team-tag">
+                        ${escapeHtml(team)}
+                        <button class="remove-btn" onclick="removeTeam(${i})" title="Kaldır">✕</button>
+                    </span>`
+                ).join('');
+            }
+            elements.teamsCount.textContent = `${state.teams.length} takım eklendi`;
+        }
+
+        // ===== Escape HTML =====
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== Show Error =====
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.classList.add('visible');
+        }
+
+        // ===== Hide Error =====
+        function hideError() {
+            elements.errorMessage.classList.remove('visible');
+        }
+
+        // ===== Fisher-Yates Shuffle =====
+        function shuffle(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // ===== Draw =====
+        async function performDraw() {
+            hideError();
+
+            if (state.names.length === 0 || state.teams.length === 0) {
+                showError('Lütfen en az bir oyuncu ve bir takım ekleyin.');
+                return;
+            }
+
+            if (state.names.length !== state.teams.length) {
+                showError(`Oyuncu sayısı (${state.names.length}) ile takım sayısı (${state.teams.length}) eşit olmalıdır.`);
+                return;
+            }
+
+            elements.drawBtn.disabled = true;
+
+            // Shuffle both arrays
+            const shuffledNames = shuffle(state.names);
+            const shuffledTeams = shuffle(state.teams);
+
+            // Create results
+            state.results = shuffledNames.map((name, i) => ({
+                name: name,
+                team: shuffledTeams[i]
+            }));
+
+            // Show animation
+            await showDrawAnimation(state.results);
+
+            // Show results
+            showResults();
+
+            elements.drawBtn.disabled = false;
+        }
+
+        // ===== Draw Animation =====
+        async function showDrawAnimation(results) {
+            const overlay = elements.drawOverlay;
+            const slotName = elements.slotName;
+            const slotTeam = elements.slotTeam;
+            const counter = elements.drawCounter;
+
+            overlay.classList.add('active');
+
+            for (let i = 0; i < results.length; i++) {
+                counter.textContent = `Eşleştirme ${i + 1} / ${results.length}`;
+
+                // Shuffling animation for name
+                slotName.classList.add('shuffling');
+                slotTeam.classList.add('shuffling');
+
+                const shuffleDuration = 1500;
+                const shuffleInterval = 80;
+                const startTime = Date.now();
+
+                await new Promise(resolve => {
+                    const interval = setInterval(() => {
+                        const elapsed = Date.now() - startTime;
+                        slotName.textContent = state.names[Math.floor(Math.random() * state.names.length)];
+                        slotTeam.textContent = state.teams[Math.floor(Math.random() * state.teams.length)];
+
+                        if (elapsed >= shuffleDuration) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }, shuffleInterval);
+                });
+
+                slotName.classList.remove('shuffling');
+                slotTeam.classList.remove('shuffling');
+
+                // Reveal actual match
+                slotName.textContent = results[i].name;
+                slotTeam.textContent = results[i].team;
+
+                // Wait to show match
+                await sleep(1200);
+            }
+
+            // Close overlay
+            await sleep(400);
+            overlay.classList.remove('active');
+        }
+
+        // ===== Show Results =====
+        function showResults() {
+            elements.resultsSection.classList.add('visible');
+
+            const now = new Date();
+            elements.resultsGrid.innerHTML = '';
+
+            state.results.forEach((result, i) => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.innerHTML = `
+                    <div class="result-number">${i + 1}</div>
+                    <div class="result-details">
+                        <div class="result-name">${escapeHtml(result.name)}</div>
+                        <div class="result-team">
+                            <span class="team-dot"></span>
+                            ${escapeHtml(result.team)}
+                        </div>
+                    </div>
+                    <div class="result-arrow">→</div>
+                `;
+                elements.resultsGrid.appendChild(card);
+
+                // Staggered reveal
+                setTimeout(() => {
+                    card.classList.add('revealed');
+                }, i * 150);
+            });
+
+            // Launch confetti
+            setTimeout(launchConfetti, state.results.length * 150 + 200);
+
+            // Scroll to results
+            setTimeout(() => {
+                elements.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
+
+        // ===== Reset =====
+        function resetDraw() {
+            elements.resultsSection.classList.remove('visible');
+            elements.resultsGrid.innerHTML = '';
+            state.results = [];
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===== Confetti =====
+        function launchConfetti() {
+            const canvas = elements.confettiCanvas;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const colors = ['#6c5ce7', '#a29bfe', '#fd79a8', '#ffeaa7', '#00cec9', '#ff6b6b', '#51cf66'];
+            const particles = [];
+
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 6 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: Math.random() * 4 + 2,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10,
+                    opacity: 1
+                });
+            }
+
+            let frame = 0;
+            const maxFrames = 180;
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.05;
+                    p.rotation += p.rotationSpeed;
+
+                    if (frame > maxFrames - 60) {
+                        p.opacity -= 0.016;
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = Math.max(0, p.opacity);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+
+                frame++;
+                if (frame < maxFrames) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animate();
+        }
+
+        // ===== Utility =====
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ===== Event Listeners =====
+        elements.addNameBtn.addEventListener('click', addName);
+        elements.addTeamBtn.addEventListener('click', addTeam);
+        elements.drawBtn.addEventListener('click', performDraw);
+        elements.resetBtn.addEventListener('click', resetDraw);
+
+        elements.nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addName();
+        });
+
+        elements.teamInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addTeam();
+        });
+
+        // Handle window resize for confetti
+        window.addEventListener('resize', () => {
+            elements.confettiCanvas.width = window.innerWidth;
+            elements.confettiCanvas.height = window.innerHeight;
+        });
+
+        // ===== Initialize =====
+        initializeDefaults();
+    </script>
+</body>
+</html>
